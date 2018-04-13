@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using MockProductWebApi.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MockProductWebApi.Services
 {
@@ -17,53 +18,65 @@ namespace MockProductWebApi.Services
             this.Configuration = configuration;
         }
 
-        public List<MockProduct> GetAllMockProducts(bool includeReviews)
+        public Task<List<MockProduct>> GetAllMockProductsAsync(bool includeReviews)
         {
+            Task<List<MockProduct>> mockProductsQuery;
             if (includeReviews)
             {
-                return dbContext.MockProducts.Include(p => p.Reviews).ToList();
+                mockProductsQuery = dbContext.MockProducts.Include(p => p.Reviews).ToListAsync();
             } 
             else
             {
-                return dbContext.MockProducts.ToList();
+                mockProductsQuery = dbContext.MockProducts.ToListAsync();
             }
+
+            return mockProductsQuery;
         }
 
-        public MockProduct GetMockProductById(int id, bool includeReviews)
+        public Task<MockProduct> GetMockProductByIdAsync(int id, bool includeReviews)
         {
+            Task<MockProduct> mockProduct;
             if (includeReviews)
             {
-                return dbContext.MockProducts.Include(p => p.Reviews).FirstOrDefault(product => product.MockProductId == id);
+                mockProduct = dbContext.MockProducts
+                        .Include(p => p.Reviews)
+                        .FirstOrDefaultAsync(product => product.MockProductId == id);
             }
             else
             {
-                return dbContext.MockProducts.FirstOrDefault(product => product.MockProductId == id);
+                mockProduct = dbContext.MockProducts
+                        .FirstOrDefaultAsync(product => product.MockProductId == id);
             }
+
+            return mockProduct;
         }
 
-        public List<MockProduct> SearchMockProducts(int? id, string name, bool includeReviews)
+        public Task<List<MockProduct>> SearchMockProductsAsync(int? id, string name, bool includeReviews)
         {
             IQueryable<MockProduct> dbQuery;
             if (includeReviews)
             {
-                dbQuery = dbContext.MockProducts.Include(p => p.Reviews).Where(p => p != null);
+                dbQuery = dbContext.MockProducts.Include(p => p.Reviews).AsQueryable();
             }
             else
             {
-                dbQuery = dbContext.MockProducts.Where(p => p != null);
+                dbQuery = dbContext.MockProducts.AsQueryable();
             }
+
             if (id != null)
             {
                 dbQuery = dbQuery.Where(p => p.MockProductId == id);
             }
+
             if (name != "")
             {
                 dbQuery = dbQuery.Where(p => p.Name.ToLower().Contains(name.ToLower()));
             }
-            return dbQuery.ToList();
+
+            return dbQuery.ToListAsync();
         }
 
-        public int AddMockProduct(MockProductAddRequest addRequest)
+        public Task<int> AddMockProductAsync(MockProductAddRequest addRequest)
         {
             if (addRequest.ApiKey == Configuration["MockProductApiKey"])
             {
@@ -74,16 +87,15 @@ namespace MockProductWebApi.Services
                     ImgUrl = addRequest.ImgUrl
                 };
                 dbContext.MockProducts.Add(newProduct);
-                dbContext.SaveChanges();
-                return newProduct.MockProductId;
+                return dbContext.SaveChangesAsync().ContinueWith(changeCount => newProduct.MockProductId);
             }
             else
             {
-                return -1;
+                return Task.Run(() => -1);
             }
         } 
 
-        public bool DeleteMockProduct(MockProductDeleteRequest deleteRequest)
+        public Task<bool> DeleteMockProductAsync(MockProductDeleteRequest deleteRequest)
         {
             if (deleteRequest.ApiKey == Configuration["MockProductApiKey"])
             {
@@ -91,15 +103,14 @@ namespace MockProductWebApi.Services
                 if (elementToDelete != null)
                 {
                     dbContext.MockProducts.Remove(elementToDelete);
-                    dbContext.SaveChanges();
-                    return true;
+                    return dbContext.SaveChangesAsync().ContinueWith(changeCount => changeCount.Result > 0);
                 }
             }
 
-            return false;
+            return Task.Run(() => false);
         }
 
-        public bool UpdateMockProduct(MockProductUpdateRequest updateRequest)
+        public Task<bool> UpdateMockProductAsync(MockProductUpdateRequest updateRequest)
         {
             if (updateRequest.ApiKey == Configuration["MockProductApiKey"])
             {
@@ -109,12 +120,10 @@ namespace MockProductWebApi.Services
                     productToUpdate.ImgUrl = updateRequest.ImgUrl ?? productToUpdate.ImgUrl;
                     productToUpdate.Name = updateRequest.Name ?? productToUpdate.Name;
                     productToUpdate.Price = updateRequest.Price ?? productToUpdate.Price;
-                    dbContext.SaveChanges();
-                    return true;
+                    return dbContext.SaveChangesAsync().ContinueWith(changeCount => changeCount.Result > 0);
                 }
             }
-
-            return false;
+            return Task.Run(() => false);
         }
     }
 }

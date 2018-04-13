@@ -1,15 +1,16 @@
 ﻿using MockProductWebApi.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MockProductWebApi.Services
 {
     public interface IMockProductService
     {
-        List<MockProduct> GetAllMockProducts(bool includeReviews);
-        MockProduct GetMockProductById(int id, bool includeReviews);
-        List<MockProduct> SearchMockProducts(int? id, string name, bool includeReviews);
-        int AddMockProduct(MockProductAddRequest addRequest);
-        bool DeleteMockProduct(MockProductDeleteRequest deleteRequest);
-        bool UpdateMockProduct(MockProductUpdateRequest updateRequest);
+        Task<List<MockProduct>> GetAllMockProductsAsync(bool includeReviews);
+        Task<MockProduct> GetMockProductByIdAsync(int id, bool includeReviews);
+        Task<List<MockProduct>> SearchMockProductsAsync(int? id, string name, bool includeReviews);
+        Task<int> AddMockProductAsync(MockProductAddRequest addRequest);
+        Task<bool> DeleteMockProductAsync(MockProductDeleteRequest deleteRequest);
+        Task<bool> UpdateMockProductAsync(MockProductUpdateRequest updateRequest);
     }
 }

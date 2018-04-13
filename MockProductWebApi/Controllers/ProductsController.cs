@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MockProductWebApi.Models;
 using MockProductWebApi.Services;
@@ -22,18 +18,18 @@ namespace MockProductWebApi.Controllers
 
         // GET: api/products
         [HttpGet]
-        public JsonResult Get(bool includeReviews = false)
+        public async Task<JsonResult> Get(bool includeReviews = false)
         {
-            var mockProducts = mockProductService.GetAllMockProducts(includeReviews);
+            var mockProducts = await mockProductService.GetAllMockProductsAsync(includeReviews);
 
             return new JsonResult(new { success = true, mockProducts });
         }
 
         // GET: api/products/5
         [HttpGet("{id}", Name = "Get")]
-        public JsonResult Get(int id, bool includeReviews = false)
+        public async Task<JsonResult> Get(int id, bool includeReviews = false)
         {
-            var mockProduct = mockProductService.GetMockProductById(id, includeReviews);
+            var mockProduct = await mockProductService.GetMockProductByIdAsync(id, includeReviews);
             
             if (mockProduct != null)
             {
@@ -48,18 +44,18 @@ namespace MockProductWebApi.Controllers
 
         [HttpGet]
         [Route("search")]
-        public JsonResult Search(int? id, string name="", bool includeReviews = false)
+        public async Task<JsonResult> Search(int? id, string name="", bool includeReviews = false)
         {
-            var mockProducts = mockProductService.SearchMockProducts(id, name, includeReviews);
+            var mockProducts = await mockProductService.SearchMockProductsAsync(id, name, includeReviews);
 
             return new JsonResult(new { success = true, mockProducts });
         }
 
         //// POST: api/products
         [HttpPost]
-        public JsonResult Post([FromBody]MockProductAddRequest request)
+        public async Task<JsonResult> Post([FromBody]MockProductAddRequest request)
         {
-            var newProductId = mockProductService.AddMockProduct(request);
+            var newProductId = await mockProductService.AddMockProductAsync(request);
             if (newProductId != -1)
             {
                 return new JsonResult(new { success = true, mockProductId = newProductId });
@@ -73,18 +69,19 @@ namespace MockProductWebApi.Controllers
 
         //// PUT: api/Product/5
         [HttpPut]
-        public JsonResult Put(int id, [FromBody]MockProductUpdateRequest productUpdate)
+        public async Task<JsonResult> Put(int id, [FromBody]MockProductUpdateRequest productUpdate)
         {
-            var result = mockProductService.UpdateMockProduct(productUpdate);
+            var updateSuccess = await mockProductService.UpdateMockProductAsync(productUpdate);
 
-            return new JsonResult(new { success = result });
+            return new JsonResult(new { success = updateSuccess });
         }
 
         //// DELETE: api/ApiWithActions/5
         [HttpDelete]
-        public JsonResult Delete([FromBody]MockProductDeleteRequest request)
+        public async Task<JsonResult> Delete([FromBody]MockProductDeleteRequest request)
         {
-            var deleteSuccess = mockProductService.DeleteMockProduct(request);
+            var deleteSuccess = await mockProductService.DeleteMockProductAsync(request);
+
             return new JsonResult(new { success = deleteSuccess });
         }
     }
